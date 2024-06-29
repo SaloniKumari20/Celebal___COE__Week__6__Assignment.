@@ -1,0 +1,112 @@
+//1.Configure Self-hosted integration runtime to Extract the data from your local server and load it into azure DB.
+
+{
+    "name": "LocalSQLServer",
+    "properties": {
+        "type": "SqlServer",
+        "typeProperties": {
+            "connectionString": "Server=your_local_server;Database=your_database;User Id=your_username;Password=your_password;"
+        },
+        "connectVia": {
+            "referenceName": "your_RIYA_name",
+            "type": "IntegrationRuntimeReference"
+        }
+    }
+}
+
+{
+    "name": "AzureSQLDatabaseLinkedService",
+    "properties": {
+        "type": "AzureSqlDatabase",
+        "typeProperties": {
+            "connectionString": "Server=tcp:your_server.database.windows.net,1433;Database=your_database;User ID=your_username;Password=your_password;"
+        }
+    }
+}
+
+{
+    "name": "LocalSQLDataset",
+    "properties": {
+        "linkedServiceName": {
+            "referenceName": "LocalSQLServerLinkedService",
+            "type": "LinkedServiceReference"
+        },
+        "structure": [
+            {
+                "name": "Column1",
+                "type": "String"
+            },
+            {
+                "name": "Column2",
+                "type": "String"
+            }
+        ],
+        "type": "Dataset"
+    }
+}
+
+{
+    "name": "AzureSQLDataset",
+    "properties": {
+        "linkedServiceName": {
+            "referenceName": "AzureSQLDatabaseLinkedService",
+            "type": "LinkedServiceReference"
+        },
+        "structure": [
+            {
+                "name": "Column1",
+                "type": "String"
+            },
+            {
+                "name": "Column2",
+                "type": "String"
+            }
+        ],
+        "type": "Dataset"
+    }
+}
+
+{
+    "name": "CopyPipeline",
+    "properties": {
+        "activities": [
+            {
+                "name": "CopyFromLocalToAzureSQL",
+                "type": "Copy",
+                "dependsOn": [],
+                "policy": {
+                    "timeout": "7.00:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "source": {
+                        "type": "SqlSource",
+                        "sqlReaderQuery": "SELECT * FROM your_table"
+                    },
+                    "sink": {
+                        "type": "SqlSink",
+                        "writeBatchSize": 10000
+                    },
+                    "enableStaging": false
+                },
+                "inputs": [
+                    {
+                        "referenceName": "LocalSQLDataset",
+                        "type": "DatasetReference"
+                    }
+                ],
+                "outputs": [
+                    {
+                        "referenceName": "AzureSQLDataset",
+                        "type": "DatasetReference"
+                    }
+                ]
+            }
+        ]
+    }
+}
+

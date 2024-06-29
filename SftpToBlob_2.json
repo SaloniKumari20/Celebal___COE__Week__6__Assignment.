@@ -1,0 +1,44 @@
+//2.Configure FTP/ SFTP server and create a ADF pipeline for data extraction.
+{
+    "name": "SftpToBlob",
+    "properties": {
+        "activities": [
+            {
+                "name": "CopyyData",
+                "type": "Copyy",
+                "dependsOn": [],
+                "policy": {
+                    "timeout": "9.00:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "source": {
+                        "type": "SftpSource",
+                        "recursive": true
+                    },
+                    "sink": {
+                        "type": "BlobSink"
+                    },
+                    "enableStaging": false
+                },
+                "inputs": [
+                    {
+                        "referenceName": "SftpDataset",
+                        "type": "DatasetReference"
+                    }
+                ],
+                "outputs": [
+                    {
+                        "referenceName": "BlobDataset",
+                        "type": "DatasetReference"
+                    }
+                ]
+            }
+        ],
+        "annotations": []
+    }
+}

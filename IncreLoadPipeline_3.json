@@ -1,0 +1,140 @@
+//3.Create Incremental load pipeline and automate this on daily basis.
+{
+    "name": "IncreLoadPipeline",
+    "properties": {
+        "activities": [
+            {
+                "name": "LookupLastLoadTime",
+                "type": "Lookup",
+                "dependsOn": [],
+                "policy": {
+                    "timeout": "5.00:00:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 50,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "typeProperties": {
+                    "source": {
+                        "type": "SqlSource",
+                        "sqlReaderQuery": "SELECT MAX(LastLoadTime) as LastLoadTime FROM LoadMetadata"
+                    }
+                },
+                "linkedServiceName": {
+                    "referenceName": "YourSourceLinkedService",
+                    "type": "LinkedServiceReference"
+                },
+                "dataset": {
+                    "referenceName": "YourSourceDataset",
+                    "type": "DatasetReference"
+                }
+            },
+            {
+                "name": "CopyIncrementalData",
+                "type": "Copy",
+                "dependsOn": [
+                    {
+                        "activity": "LookupLastLoadTime",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "timeout": "5.00:00:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 50,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "typeProperties": {
+                    "source": {
+                        "type": "SqlSource",
+                        "sqlReaderQuery": {
+                            "value": "SELECT * FROM YourSourceTable WHERE ModifiedDate > '@{activity('LookupLastLoadTime').output.firstRow.LastLoadTime}'",
+                            "type": "Expression"
+                        }
+                    },
+                    "sink": {
+                        "type": "SqlSink",
+                        "writeBatchSize": 10000,
+                        "writeBatchTimeout": "00:00:00"
+                    }
+                },
+                "inputs": [
+                    {
+                        "referenceName": "YourSourceDataset",
+                        "type": "DatasetReference"
+                    }
+                ],
+                "outputs": [
+                    {
+                        "referenceName": "YourDestinationDataset",
+                        "type": "DatasetReference"
+                    }
+                ],
+                "linkedServiceName": {
+                    "referenceName": "YourDestinationLinkedService",
+                    "type": "LinkedServiceReference"
+                }
+            },
+            {
+                "name": "UpdateLoadMetadata",
+                "type": "StoredProcedure",
+                "dependsOn": [
+                    {
+                        "activity": "CopyIncrementalData",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "timeout": "1.00:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 50,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "typeProperties": {
+                    "storedProcedureName": "sp_UpdateLoadMetadata",
+                    "storedProcedureParameters": {
+                        "LastLoadTime": {
+                            "value": "@utcnow()",
+                            "type": "Expression"
+                        }
+                    }
+                },
+                "linkedServiceName": {
+                    "referenceName": "YourSourceLinkedService",
+                    "type": "LinkedServiceReference"
+                }
+            }
+        ],
+        "annotations": []
+    }
+}
+
+{
+    "name": "DailyTrigger",
+    "properties": {
+        "type": "ScheduleTrigger",
+        "typeProperties": {
+            "recurrence": {
+                "frequency": "Day",
+                "interval": 1,
+                "startTime": "2024-01-01T00:00:00Z",
+                "timeZone": "UTC"
+            }
+        },
+        "pipelines": [
+            {
+                "pipelineReference": {
+                    "referenceName": "IncrementalLoadPipeline",
+                    "type": "PipelineReference"
+                },
+                "parameters": {}
+            }
+        ]
+    }
+}

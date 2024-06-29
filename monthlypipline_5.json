@@ -1,0 +1,76 @@
+//5.Retrieving data. Wait a few seconds and try to cut or copy again.
+{
+    "name": "monthlyPipeline",
+    "properties": {
+        "activities": [
+            {
+                "name": "ExActivity",
+                "type": "Copy",
+                "dependsOn": [],
+                "policy": {
+                    "timeout": "4.00:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 20,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "typeProperties": {
+                    "source": {
+                        "type": "BlobSource"
+                    },
+                    "sink": {
+                        "type": "BlobSink"
+                    }
+                },
+                "inputs": [
+                    {
+                        "referenceName": "SourceDataset",
+                        "type": "DatasetReference"
+                    }
+                ],
+                "outputs": [
+                    {
+                        "referenceName": "DestinationDataset",
+                        "type": "DatasetReference"
+                    }
+                ]
+            }
+        ],
+        "annotations": []
+    }
+}
+
+
+{
+    "name": "LastSaturdayTrigger",
+    "properties": {
+        "type": "ScheduleTrigger",
+        "typeProperties": {
+            "recurrence": {
+                "frequency": "Month",
+                "interval": 1,
+                "startTime": "2024-07-27T00:00:00Z",
+                "timeZone": "UTC",
+                "schedule": {
+                    "monthDays": [
+                        -1, -2, -3, -4, -5, -6, -7
+                    ],
+                    "weekDays": [
+                        "Saturday"
+                    ]
+                }
+            }
+        },
+        "pipelines": [
+            {
+                "pipelineReference": {
+                    "referenceName": "monthlyPipeline",
+                    "type": "PipelineReference"
+                },
+                "parameters": {}
+            }
+        ]
+    }
+}
+
+

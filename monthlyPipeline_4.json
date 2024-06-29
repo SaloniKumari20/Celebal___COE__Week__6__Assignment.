@@ -1,0 +1,76 @@
+//4.Automate a pipline to trigger every last Saturday of the month.
+{
+    "name": "monthlyPipeline",
+    "properties": {
+        "activities": [
+            {
+                "name": "ExActivity",
+                "type": "Copy",
+                "dependsOn": [],
+                "policy": {
+                    "timeout": "3.00:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "typeProperties": {
+                    "source": {
+                        "type": "BlobSource"
+                    },
+                    "sink": {
+                        "type": "BlobSink"
+                    }
+                },
+                "inputs": [
+                    {
+                        "referenceName": "SourceDataset",
+                        "type": "DatasetReference"
+                    }
+                ],
+                "outputs": [
+                    {
+                        "referenceName": "DestinationDataset",
+                        "type": "DatasetReference"
+                    }
+                ]
+            }
+        ],
+        "annotations": []
+    }
+}
+
+
+{
+    "name": "LastSaturdayTrigger",
+    "properties": {
+        "type": "ScheduleTrigger",
+        "typeProperties": {
+            "recurrence": {
+                "frequency": "Month",
+                "interval": 1,
+                "startTime": "2024-07-27T00:00:00Z",  
+                "timeZone": "UTC",
+                "schedule": {
+                    "monthDays": [
+                        -1, -2, -3, -4, -5, -6, -7
+                    ],
+                    "weekDays": [
+                        "Saturday"
+                    ]
+                }
+            }
+        },
+        "pipelines": [
+            {
+                "pipelineReference": {
+                    "referenceName": "monthlyPipeline",
+                    "type": "PipelineReference"
+                },
+                "parameters": {}
+            }
+        ]
+    }
+}
+
+
